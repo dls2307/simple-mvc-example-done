@@ -4,6 +4,8 @@ const models = require('../models');
 // get the Cat model
 const Cat = models.Cat.CatModel;
 
+const Dog = models.Dog.DogModel;
+
 // default fake data so that we have something to work with until we make a real Cat
 const defaultData = {
   name: 'unknown',
@@ -43,6 +45,25 @@ const readAllCats = (req, res, callback) => {
   // The lean function will force find to return data in the js
   // object format, rather than the Mongo document format.
   Cat.find(callback).lean();
+};
+
+const readAllDogs = (req, res, callback) => {
+  Dog.find(callback).lean();
+};
+
+const readDog = (req, res) => {
+  const name1 = req.query.name;
+
+  const callback = (err, doc) => {
+    if (err) {
+      return res.status(500).json({ err }); // if error, return it
+    }
+
+    // return success
+    return res.json(doc);
+  };
+
+  Dog.findByName(name1, callback);
 };
 
 // function to find a specific cat on request.
@@ -167,6 +188,31 @@ const setName = (req, res) => {
   return res;
 };
 
+const setDogName = (req, res) => {
+  if (!req.body.firstname || !req.body.lastname || !req.body.breed || !req.body.age) {
+    return res.status(400).json({ error: 'firstname, lastname, breed, and age are all required' });
+  }
+
+  const name = `${req.body.firstname} ${req.body.lastname}`;
+
+  const dogData = {
+    name,
+    breed: req.body.breed,
+    age: req.body.age,
+  };
+
+  const newDog = new Dog(dogData);
+
+  const savePromise = newDog.save();
+
+  savePromise.then(() => {
+    res.json({ name: newDog.name, breed: newDog.breed, age: newDog.age });
+  });
+
+  savePromise.catch((err) => res.status(500).json({ err }));
+  return res;
+};
+
 // function to handle requests search for a name and return the object
 // controller functions in Express receive the full HTTP request
 // and a pre-filled out response object to send
@@ -203,6 +249,39 @@ const searchName = (req, res) => {
 
     // if a match, send the match back
     return res.json({ name: doc.name, beds: doc.bedsOwned });
+  });
+};
+
+const updateDog = (req, res) => {
+  if (!req.query.name) {
+    return res.status(400).json({ error: 'Name is required to perform a search' });
+  }
+
+  return Dog.findByName(req.query.name, (err, doc) => {
+    if (err) {
+      return res.status(500).json({ err });
+    }
+
+    if (!doc) {
+      return res.json({ error: 'No dogs found' });
+    }
+
+    const dogData = {
+      name: doc.name,
+      breed: doc.breed,
+      age: doc.age + 1,
+    };
+
+    const updatedDog = new Dog(dogData);
+
+    const savePromise = updatedDog.save();
+
+    savePromise.then(() => {
+      res.json({ name: updatedDog.name, breed: updatedDog.breed, age: updatedDog.age });
+    });
+
+    savePromise.catch((err) => res.status(500).json({ err }));
+    return updatedDog;
   });
 };
 
@@ -259,4 +338,8 @@ module.exports = {
   updateLast,
   searchName,
   notFound,
+  readAllDogs,
+  readDog,
+  setDogName,
+  updateDog,
 };
