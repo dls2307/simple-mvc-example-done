@@ -108,6 +108,18 @@ const hostPage1 = (req, res) => {
   readAllCats(req, res, callback);
 };
 
+const hostPage4 = (req, res) => {
+  const callback = (err, docs) => {
+    if (err) {
+      return res.status(500).json({ err });
+    }
+
+    return res.render('page4', { dogs: docs });
+  };
+
+  readAllDogs(req, res, callback);
+};
+
 // function to handle requests to the page2 page
 // controller functions in Express receive the full HTTP request
 // and a pre-filled out response object to send
@@ -253,11 +265,11 @@ const searchName = (req, res) => {
 };
 
 const updateDog = (req, res) => {
-  if (!req.query.name) {
+  if (!req.body.name) {
     return res.status(400).json({ error: 'Name is required to perform a search' });
   }
 
-  return Dog.findByName(req.query.name, (err, doc) => {
+  return Dog.findByName(req.body.name, (err, doc) => {
     if (err) {
       return res.status(500).json({ err });
     }
@@ -266,13 +278,8 @@ const updateDog = (req, res) => {
       return res.json({ error: 'No dogs found' });
     }
 
-    const dogData = {
-      name: doc.name,
-      breed: doc.breed,
-      age: doc.age + 1,
-    };
-
-    const updatedDog = new Dog(dogData);
+    const updatedDog = doc;
+    updatedDog.age++;
 
     const savePromise = updatedDog.save();
 
@@ -332,6 +339,7 @@ module.exports = {
   page1: hostPage1,
   page2: hostPage2,
   page3: hostPage3,
+  page4: hostPage4,
   readCat,
   getName,
   setName,
