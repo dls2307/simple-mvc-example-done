@@ -280,7 +280,7 @@ const updateDog = (req, res) => {
       res.json({ name: updatedDog.name, breed: updatedDog.breed, age: updatedDog.age });
     });
 
-    savePromise.catch((err) => res.status(500).json({ err }));
+    savePromise.catch((otherErr) => res.status(500).json({ otherErr }));
     return updatedDog;
   });
 };
